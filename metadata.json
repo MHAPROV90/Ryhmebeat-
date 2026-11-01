@@ -1,0 +1,6 @@
+{
+  "name": "RhymeBeat",
+  "description": "Generate beat-synced lyrics, real audio rhythm tracks, and smart rhyme suggestions tailored to musical genres and tempo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
