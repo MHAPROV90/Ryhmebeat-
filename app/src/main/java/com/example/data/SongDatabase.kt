@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [SongDraft::class], version = 1, exportSchema = false)
+@Database(entities = [SongDraft::class], version = 3, exportSchema = false)
 abstract class SongDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao
 
@@ -19,7 +19,7 @@ abstract class SongDatabase : RoomDatabase() {
                     context.applicationContext,
                     SongDatabase::class.java,
                     "rhymebeat_songs.db"
-                ).fallbackToDestructiveMigration().build()
+                ).fallbackToDestructiveMigration(dropAllTables = true).build()
                 INSTANCE = instance
                 instance
             }

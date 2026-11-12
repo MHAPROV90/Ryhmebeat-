@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BookmarkAdd
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MusicNote
@@ -62,12 +63,18 @@ import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TextTertiary
 
+import androidx.compose.material.icons.filled.BookmarkAdded
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Storage
+
 @Composable
 fun LyricsDisplayCard(
     lyricState: LyricUiState,
     beatPosition: BeatPosition,
     onSaveToSongbook: () -> Unit,
     onRetry: () -> Unit,
+    onSendToEditor: (() -> Unit)? = null,
+    isSavedToDevice: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -232,6 +239,27 @@ fun LyricsDisplayCard(
                         }
 
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            // Edit in Lyric Editor Action
+                            if (onSendToEditor != null) {
+                                Surface(
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = NeonCyan.copy(alpha = 0.2f),
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .border(1.dp, NeonCyan, RoundedCornerShape(10.dp)),
+                                    onClick = onSendToEditor
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.Edit,
+                                            contentDescription = "Edit in Lyric Editor",
+                                            tint = NeonCyan,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            }
+
                             // Copy Action
                             Surface(
                                 shape = RoundedCornerShape(10.dp),
@@ -264,20 +292,73 @@ fun LyricsDisplayCard(
                             // Save to Songbook Action
                             Surface(
                                 shape = RoundedCornerShape(10.dp),
-                                color = ElectricMagenta.copy(alpha = 0.2f),
+                                color = if (isSavedToDevice) Color(0xFF2E7D32).copy(alpha = 0.25f) else ElectricMagenta.copy(alpha = 0.2f),
                                 modifier = Modifier
                                     .size(38.dp)
-                                    .border(1.dp, ElectricMagenta, RoundedCornerShape(10.dp)),
+                                    .border(1.dp, if (isSavedToDevice) Color(0xFF2E7D32) else ElectricMagenta, RoundedCornerShape(10.dp)),
                                 onClick = onSaveToSongbook
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
-                                        imageVector = Icons.Default.BookmarkAdd,
-                                        contentDescription = "Save to Songbook",
-                                        tint = ElectricMagenta,
+                                        imageVector = if (isSavedToDevice) Icons.Default.BookmarkAdded else Icons.Default.BookmarkAdd,
+                                        contentDescription = if (isSavedToDevice) "Saved Locally" else "Save to Songbook",
+                                        tint = if (isSavedToDevice) Color(0xFF4CAF50) else ElectricMagenta,
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Prominent Save Generated Lyrics to Device (Room DB) CTA Bar
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Button(
+                            onClick = onSaveToSongbook,
+                            enabled = !isSavedToDevice,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(42.dp)
+                                .testTag("save_generated_lyrics_button"),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSavedToDevice) Color(0xFF2E7D32) else ElectricMagenta,
+                                contentColor = Color.White,
+                                disabledContainerColor = Color(0xFF1B5E20),
+                                disabledContentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isSavedToDevice) Icons.Default.Check else Icons.Default.BookmarkAdd,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (isSavedToDevice) "Saved to Device (Room DB)" else "Save Generated Lyrics",
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+
+                        if (onSendToEditor != null) {
+                            OutlinedButton(
+                                onClick = onSendToEditor,
+                                modifier = Modifier
+                                    .height(42.dp)
+                                    .testTag("open_generated_in_editor_button"),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, NeonCyan),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan)
+                            ) {
+                                Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Edit in Studio", style = MaterialTheme.typography.labelMedium)
                             }
                         }
                     }
@@ -376,6 +457,26 @@ fun LyricsDisplayCard(
                                     )
                                 }
                             }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFF141923),
+                        border = BorderStroke(1.dp, StudioBorder),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Storage, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = if (isSavedToDevice) "Lyrics safely stored locally in on-device Room database. Revisit anytime in Songbook." else "Save these generated lyrics locally to keep them in your device Songbook.",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, color = TextSecondary)
+                            )
                         }
                     }
                 }

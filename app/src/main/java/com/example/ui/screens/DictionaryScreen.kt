@@ -23,10 +23,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.LibraryBooks
 import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.LibraryBooks
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -206,7 +206,7 @@ fun DictionaryScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        imageVector = Icons.Default.LibraryBooks,
+                        imageVector = Icons.AutoMirrored.Filled.LibraryBooks,
                         contentDescription = null,
                         tint = TextTertiary,
                         modifier = Modifier.size(48.dp)
@@ -233,6 +233,7 @@ fun DictionaryScreen(
                         entry = entry,
                         onSendToStudio = {
                             viewModel.setTargetPhrase(entry.wordOrPhrase)
+                            viewModel.insertRhymeIntoEditor(entry.wordOrPhrase)
                             onSendToStudio(entry.wordOrPhrase)
                         },
                         onCopyWord = {

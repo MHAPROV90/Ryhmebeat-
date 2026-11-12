@@ -44,6 +44,8 @@ data class BeatPosition(
 
 class AudioBeatEngine(private val scope: CoroutineScope) {
 
+    val drumEngine = DrumBeatEngine(scope)
+
     private var audioTrack: AudioTrack? = null
     private var playbackJob: Job? = null
 
@@ -74,12 +76,25 @@ class AudioBeatEngine(private val scope: CoroutineScope) {
         _currentGenre.value = genre
         _bpm.value = genre.defaultBpm
         _beatPosition.value = _beatPosition.value.copy(bpm = genre.defaultBpm)
+        drumEngine.setBpm(genre.defaultBpm)
+        drumEngine.setPattern(getPatternForGenre(genre))
     }
 
     fun setBpm(newBpm: Int) {
         val clamped = newBpm.coerceIn(50, 190)
         _bpm.value = clamped
         _beatPosition.value = _beatPosition.value.copy(bpm = clamped)
+        drumEngine.setBpm(clamped)
+    }
+
+    private fun getPatternForGenre(genre: Genre): DrumPattern = when (genre) {
+        Genre.HIP_HOP -> DrumPattern.HIP_HOP
+        Genre.TRAP -> DrumPattern.TRAP
+        Genre.POP -> DrumPattern.POP
+        Genre.ROCK -> DrumPattern.ROCK
+        Genre.COUNTRY -> DrumPattern.COUNTRY
+        Genre.RNB -> DrumPattern.RNB
+        Genre.LO_FI -> DrumPattern.LO_FI
     }
 
     fun registerTap() {
@@ -121,11 +136,18 @@ class AudioBeatEngine(private val scope: CoroutineScope) {
         if (playbackJob?.isActive == true) return
 
         try {
-            val bufferSize = AudioTrack.getMinBufferSize(
+            val frameSizeInBytes = 2 // 16-bit mono PCM = 2 bytes per frame
+            val minBuf = AudioTrack.getMinBufferSize(
                 SAMPLE_RATE,
                 AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT
-            ).coerceAtLeast(SAMPLE_RATE / 4)
+            )
+            val baseSize = if (minBuf > 0) minBuf.coerceAtLeast(8192) else 8192
+            val bufferSize = if (baseSize % frameSizeInBytes != 0) {
+                baseSize + (frameSizeInBytes - (baseSize % frameSizeInBytes))
+            } else {
+                baseSize
+            }
 
             audioTrack = AudioTrack.Builder()
                 .setAudioAttributes(
@@ -166,6 +188,7 @@ class AudioBeatEngine(private val scope: CoroutineScope) {
         } catch (e: Exception) {
             Log.e(TAG, "Error releasing audio track", e)
         }
+        drumEngine.stop()
         audioTrack = null
         _beatPosition.value = _beatPosition.value.copy(isPlaying = false, bar = 1, beat = 1, step = 0)
     }
